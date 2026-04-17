@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Property Tracker">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Property Tracker</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f4f0;
+    --bg3: #eceae4;
+    --text: #1a1a1a;
+    --text2: #666660;
+    --text3: #999993;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.2);
+    --accent: #1a1a1a;
+    --green-bg: #eaf3de;
+    --green-text: #3b6d11;
+    --green-border: rgba(59,109,17,0.3);
+    --amber-bg: #faeeda;
+    --amber-text: #854f0b;
+    --amber-border: rgba(133,79,11,0.3);
+    --red-bg: #fcebeb;
+    --red-text: #a32d2d;
+    --red-border: rgba(163,45,45,0.3);
+    --blue-bg: #e6f1fb;
+    --blue-text: #185fa5;
+    --blue-border: rgba(24,95,165,0.3);
+    --radius: 10px;
+    --radius-sm: 7px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --bg2: #252523;
+      --bg3: #2e2e2b;
+      --text: #f0ede6;
+      --text2: #a8a89e;
+      --text3: #6e6e66;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.18);
+      --accent: #f0ede6;
+      --green-bg: #173404;
+      --green-text: #c0dd97;
+      --green-border: rgba(192,221,151,0.25);
+      --amber-bg: #412402;
+      --amber-text: #fac775;
+      --amber-border: rgba(250,199,117,0.25);
+      --red-bg: #501313;
+      --red-text: #f7c1c1;
+      --red-border: rgba(247,193,193,0.25);
+      --blue-bg: #042c53;
+      --blue-text: #b5d4f4;
+      --blue-border: rgba(181,212,244,0.25);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { font-size: 16px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; padding-bottom: 80px; }
+
+  /* Nav */
+  .nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg); border-top: 0.5px solid var(--border); display: flex; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+  .nav-btn { flex: 1; padding: 12px 4px 10px; border: none; background: none; color: var(--text2); font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; font-family: inherit; }
+  .nav-btn svg { width: 22px; height: 22px; }
+  .nav-btn.active { color: var(--text); }
+  .nav-btn.active svg { stroke-width: 2; }
+
+  /* Pages */
+  .page { display: none; padding: 0 0 1rem; }
+  .page.active { display: block; }
+  .page-header { padding: 1rem 1rem 0.5rem; border-bottom: 0.5px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 10; }
+  .page-title { font-size: 20px; font-weight: 600; }
+  .page-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+  /* Form */
+  .form-body { padding: 1rem; }
+  .section { margin-bottom: 1.5rem; }
+  .section-label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .field { margin-bottom: 10px; }
+  .field label { display: block; font-size: 13px; color: var(--text2); margin-bottom: 4px; }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 10px 12px; border-radius: var(--radius-sm);
+    border: 0.5px solid var(--border2); background: var(--bg2);
+    color: var(--text); font-size: 15px; font-family: inherit;
+    -webkit-appearance: none; appearance: none;
+  }
+  .field textarea { min-height: 70px; resize: vertical; line-height: 1.5; }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Checklist */
+  .check-group { background: var(--bg2); border-radius: var(--radius); overflow: hidden; border: 0.5px solid var(--border); }
+  .check-row { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-bottom: 0.5px solid var(--border); cursor: pointer; }
+  .check-row:last-child { border-bottom: none; }
+  .check-row.flag { background: var(--amber-bg); }
+  .check-row.flag .check-label { color: var(--amber-text); }
+  .check-box { width: 20px; height: 20px; border-radius: 5px; border: 1.5px solid var(--border2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--bg); transition: all 0.15s; }
+  .check-box.checked { background: var(--accent); border-color: var(--accent); }
+  .check-box.checked svg { display: block; }
+  .check-box svg { display: none; width: 12px; height: 12px; stroke: var(--bg); stroke-width: 3; fill: none; }
+  .check-label { font-size: 14px; line-height: 1.4; }
+
+  /* Stars */
+  .rating-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 0.5px solid var(--border); }
+  .rating-row:last-child { border-bottom: none; }
+  .rating-label { font-size: 14px; flex: 1; }
+  .stars { display: flex; gap: 5px; }
+  .star { width: 28px; height: 28px; border-radius: 6px; border: 0.5px solid var(--border2); background: var(--bg2); display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; transition: all 0.1s; }
+  .star.on { background: var(--amber-bg); border-color: var(--amber-border); }
+
+  /* Verdict */
+  .verdict-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .verdict-btn { padding: 12px; border-radius: var(--radius-sm); border: 0.5px solid var(--border2); background: var(--bg2); font-size: 14px; font-family: inherit; color: var(--text2); cursor: pointer; text-align: center; font-weight: 500; transition: all 0.15s; }
+  .verdict-btn.v-proceed { background: var(--green-bg); color: var(--green-text); border-color: var(--green-border); }
+  .verdict-btn.v-revisit { background: var(--blue-bg); color: var(--blue-text); border-color: var(--blue-border); }
+  .verdict-btn.v-maybe { background: var(--amber-bg); color: var(--amber-text); border-color: var(--amber-border); }
+  .verdict-btn.v-pass { background: var(--red-bg); color: var(--red-text); border-color: var(--red-border); }
+
+  /* Save button */
+  .save-btn { width: 100%; padding: 15px; border-radius: var(--radius); border: none; background: var(--accent); color: var(--bg); font-size: 16px; font-weight: 600; font-family: inherit; cursor: pointer; margin-top: 1rem; }
+  .save-btn:active { opacity: 0.85; transform: scale(0.99); }
+
+  /* Dashboard */
+  .dash-body { padding: 1rem; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.5rem; }
+  .stat-card { background: var(--bg2); border-radius: var(--radius); padding: 14px; border: 0.5px solid var(--border); }
+  .stat-num { font-size: 26px; font-weight: 600; }
+  .stat-label { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .property-card { background: var(--bg2); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; border: 0.5px solid var(--border); cursor: pointer; }
+  .property-card:active { opacity: 0.8; }
+  .pc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .pc-name { font-size: 15px; font-weight: 600; flex: 1; padding-right: 8px; }
+  .pc-badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 500; flex-shrink: 0; }
+  .badge-proceed { background: var(--green-bg); color: var(--green-text); }
+  .badge-revisit { background: var(--blue-bg); color: var(--blue-text); }
+  .badge-maybe { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-pass { background: var(--red-bg); color: var(--red-text); }
+  .badge-none { background: var(--bg3); color: var(--text2); }
+  .pc-meta { font-size: 13px; color: var(--text2); }
+  .pc-stars { font-size: 13px; margin-top: 4px; }
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text2); }
+  .empty-state p { font-size: 15px; margin-top: 8px; }
+
+  /* Detail view */
+  .detail-back { display: flex; align-items: center; gap: 6px; padding: 14px 1rem 10px; font-size: 15px; color: var(--text2); cursor: pointer; border-bottom: 0.5px solid var(--border); }
+  .detail-body { padding: 1rem; }
+  .detail-section { margin-bottom: 1.5rem; }
+  .detail-section-title { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .detail-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; border-bottom: 0.5px solid var(--border); font-size: 14px; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-key { color: var(--text2); flex-shrink: 0; padding-right: 12px; }
+  .detail-val { font-weight: 500; text-align: right; }
+  .delete-btn { width: 100%; padding: 13px; border-radius: var(--radius); border: 0.5px solid var(--red-border); background: var(--red-bg); color: var(--red-text); font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; margin-top: 1rem; }
+  .cancel-btn { width: 100%; padding: 13px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text2); font-size: 15px; font-weight: 500; font-family: inherit; cursor: pointer; margin-top: 10px; }
+
+  /* Export */
+  .export-btn { width: 100%; padding: 13px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; margin-bottom: 10px; }
+
+  /* Toast */
+  .toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); background: var(--accent); color: var(--bg); padding: 10px 18px; border-radius: 20px; font-size: 14px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+
+  .new-btn { float: right; padding: 6px 14px; border-radius: var(--radius-sm); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); font-size: 13px; font-family: inherit; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- Dashboard Page -->
+<div id="page-dash" class="page active">
+  <div class="page-header">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">Your viewing history</div>
+      </div>
+      <button class="new-btn" onclick="showPage('form'); resetForm();">+ New</button>
+    </div>
+  </div>
+  <div class="dash-body">
+    <div class="stat-grid" id="stat-grid"></div>
+    <div id="property-list"></div>
+  </div>
+</div>
+
+<!-- Form Page -->
+<div id="page-form" class="page">
+  <div class="page-header">
+    <div class="page-title" id="form-title">New viewing</div>
+    <div class="page-sub">Fill in during or after viewing</div>
+  </div>
+  <div class="form-body">
+
+    <div class="section">
+      <div class="section-label">Unit details</div>
+      <div class="field"><label>Development name *</label><input id="f-name" type="text" placeholder="e.g. Tanah Merah Mansion"></div>
+      <div class="field"><label>Address / unit</label><input id="f-address" type="text" placeholder="e.g. 137 Tanah Merah Kechil Rd #04-02"></div>
+      <div class="field-row">
+        <div class="field"><label>Date viewed</label><input id="f-date" type="date"></div>
+        <div class="field"><label>Asking price (SGD)</label><input id="f-price" type="text" inputmode="numeric" placeholder="1,560,000"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Size (sqft)</label><input id="f-sqft" type="text" inputmode="numeric" placeholder="1,324"></div>
+        <div class="field"><label>PSF (SGD)</label><input id="f-psf" type="text" inputmode="numeric" placeholder="1,178"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Bedrooms</label><input id="f-beds" type="text" inputmode="numeric" placeholder="3"></div>
+        <div class="field"><label>Floor</label><input id="f-floor" type="text" placeholder="e.g. 4, walk-up"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Tenure</label>
+          <select id="f-tenure">
+            <option value="">Select</option>
+            <option>Freehold</option>
+            <option>99-year leasehold</option>
+            <option>999-year leasehold</option>
+          </select>
+        </div>
+        <div class="field"><label>Year built (TOP)</label><input id="f-top" type="text" inputmode="numeric" placeholder="1984"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Nearest MRT</label><input id="f-mrt" type="text" placeholder="e.g. Bedok South"></div>
+        <div class="field"><label>Walk time (min)</label><input id="f-mrt-time" type="text" inputmode="numeric" placeholder="8"></div>
+      </div>
+      <div class="field"><label>Monthly maintenance (SGD)</label><input id="f-maint" type="text" inputmode="numeric" placeholder="350"></div>
+      <div class="field"><label>Unit facing / direction</label><input id="f-facing" type="text" placeholder="e.g. North, pool view"></div>
+      <div class="field"><label>Agent name</label><input id="f-agent" type="text" placeholder="Name"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Non-negotiables ⚠️</div>
+      <div class="check-group" id="nn-checks"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Physical inspection</div>
+      <div class="check-group" id="phys-checks"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Building questions</div>
+      <div class="check-group" id="bldg-checks"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">My situation</div>
+      <div class="check-group" id="my-checks"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Ratings</div>
+      <div class="check-group" id="ratings-group"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Notes</div>
+      <div class="field"><label>Red flags</label><textarea id="f-flags" placeholder="Anything that concerned you..."></textarea></div>
+      <div class="field"><label>Positives</label><textarea id="f-positives" placeholder="What stood out well..."></textarea></div>
+      <div class="field"><label>Follow-up questions</label><textarea id="f-followup" placeholder="Things to verify before proceeding..."></textarea></div>
+      <div class="field"><label>Negotiation notes</label><textarea id="f-nego" placeholder="Seller motivation, days on market, room to move..."></textarea></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Verdict</div>
+      <div class="verdict-grid">
+        <button class="verdict-btn" id="v-proceed" onclick="setVerdict('proceed')">✓ Proceed</button>
+        <button class="verdict-btn" id="v-revisit" onclick="setVerdict('revisit')">↩ Revisit</button>
+        <button class="verdict-btn" id="v-maybe" onclick="setVerdict('maybe')">~ Maybe</button>
+        <button class="verdict-btn" id="v-pass" onclick="setVerdict('pass')">✕ Pass</button>
+      </div>
+    </div>
+
+    <button class="save-btn" onclick="saveEntry()">Save viewing</button>
+    <button class="cancel-btn" onclick="showPage('dash')">Cancel</button>
+  </div>
+</div>
+
+<!-- Detail Page -->
+<div id="page-detail" class="page">
+  <div class="detail-back" onclick="showPage('dash')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Back
+  </div>
+  <div id="detail-body" class="detail-body"></div>
+</div>
+
+<!-- Export Page -->
+<div id="page-export" class="page">
+  <div class="page-header">
+    <div class="page-title">Export data</div>
+    <div class="page-sub">Share your data with Claude</div>
+  </div>
+  <div class="dash-body">
+    <p style="font-size:14px;color:var(--text2);margin-bottom:1rem;line-height:1.6;">Copy the JSON below and paste it into your Claude chat to get analysis and comparisons across all your viewings.</p>
+    <button class="export-btn" onclick="copyJSON()">Copy all data as JSON</button>
+    <button class="export-btn" onclick="copySummary()">Copy readable summary</button>
+    <textarea id="export-area" style="width:100%;min-height:200px;font-size:12px;font-family:monospace;padding:12px;border-radius:10px;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);resize:vertical;" readonly placeholder="Your data will appear here..."></textarea>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="nav">
+  <button class="nav-btn active" id="nav-dash" onclick="showPage('dash')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Dashboard
+  </button>
+  <button class="nav-btn" id="nav-form" onclick="showPage('form'); resetForm();">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/></svg>
+    New viewing
+  </button>
+  <button class="nav-btn" id="nav-export" onclick="showPage('export'); renderExport();">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+    Export
+  </button>
+</nav>
+
+<script>
+const NN_ITEMS = [
+  'Lift access confirmed (no walk-up)',
+  'Size at or above 800 sqft',
+  'Not ground floor',
+  'Lease covers buyer to age 95 (if leasehold)',
+  'Within budget including BSD (~3-4% on top)'
+];
+const PHYS_ITEMS = [
+  'Water pressure OK — taps and shower tested',
+  'No water stains on walls or ceiling',
+  'No visible cracks or peeling paint',
+  'Windows seal well, no rust or condensation tracks',
+  'Electrical DB box looks modern, sufficient power points',
+  'Good natural light — facing checked (N/S preferred)',
+  'Ventilation adequate, no dampness smell',
+  'Noise level acceptable (traffic, MRT, neighbours)',
+  'Mobile signal checked inside unit',
+  'Common areas and corridors well maintained',
+  'Carpark is sheltered',
+  'No heavy renovation masking potential issues'
+];
+const BLDG_ITEMS = [
+  'Last external repainting / waterproofing confirmed',
+  'No pending special levies or major works',
+  'Monthly maintenance fees confirmed',
+  'Number of units in development noted',
+  'En bloc status clarified (if older freehold)'
+];
+const MY_ITEMS = [
+  'Secondary school proximity acceptable for daughter',
+  'Security features adequate (intercom, access control)',
+  'Layout works for solo parent + child — bedrooms have privacy',
+  'Rental potential if circumstances change',
+  'PSF verified against recent URA comps for this development'
+];
+const RATING_ITEMS = ['Location feel','Layout and space','Condition / finish','Value for money','Gut feel'];
+
+let currentVerdict = '';
+let editingId = null;
+let ratings = {};
+
+function buildChecks(containerId, items, prefix, isFlag) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  items.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'check-row' + (isFlag ? ' flag' : '');
+    row.id = `row-${prefix}-${i}`;
+    row.onclick = () => toggleCheck(prefix, i);
+    row.innerHTML = `<div class="check-box" id="box-${prefix}-${i}"><svg viewBox="0 0 12 12"><polyline points="1,6 4,10 11,2"/></svg></div><span class="check-label">${item}</span>`;
+    el.appendChild(row);
+  });
+}
+
+function buildRatings() {
+  const el = document.getElementById('ratings-group');
+  el.innerHTML = '';
+  RATING_ITEMS.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'rating-row';
+    row.innerHTML = `<span class="rating-label">${item}</span><div class="stars" id="stars-${i}">${[1,2,3,4,5].map(n=>`<div class="star" onclick="setStar(${i},${n})">${n}</div>`).join('')}</div>`;
+    el.appendChild(row);
+  });
+}
+
+function toggleCheck(prefix, i) {
+  const box = document.getElementById(`box-${prefix}-${i}`);
+  box.classList.toggle('checked');
+}
+
+function setStar(ratingIdx, val) {
+  ratings[ratingIdx] = val;
+  const container = document.getElementById(`stars-${ratingIdx}`);
+  container.querySelectorAll('.star').forEach((s, idx) => {
+    s.classList.toggle('on', idx < val);
+  });
+}
+
+function setVerdict(v) {
+  currentVerdict = v;
+  ['proceed','revisit','maybe','pass'].forEach(id => {
+    const btn = document.getElementById(`v-${id}`);
+    btn.className = 'verdict-btn' + (id === v ? ` v-${id}` : '');
+  });
+}
+
+function getChecks(prefix, items) {
+  return items.map((item, i) => ({
+    label: item,
+    checked: document.getElementById(`box-${prefix}-${i}`)?.classList.contains('checked') || false
+  }));
+}
+
+function resetForm() {
+  editingId = null;
+  document.getElementById('form-title').textContent = 'New viewing';
+  ['name','address','price','sqft','psf','beds','floor','top','mrt','mrt-time','maint','facing','agent','flags','positives','followup','nego'].forEach(id => {
+    const el = document.getElementById(`f-${id}`);
+    if (el) el.value = '';
+  });
+  document.getElementById('f-tenure').value = '';
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  currentVerdict = '';
+  ratings = {};
+  buildChecks('nn-checks', NN_ITEMS, 'nn', true);
+  buildChecks('phys-checks', PHYS_ITEMS, 'phys', false);
+  buildChecks('bldg-checks', BLDG_ITEMS, 'bldg', false);
+  buildChecks('my-checks', MY_ITEMS, 'my', false);
+  buildRatings();
+  ['proceed','revisit','maybe','pass'].forEach(id => {
+    document.getElementById(`v-${id}`).className = 'verdict-btn';
+  });
+}
+
+function saveEntry() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { showToast('Please enter a development name'); return; }
+  const entry = {
+    id: editingId || Date.now().toString(),
+    savedAt: new Date().toISOString(),
+    name,
+    address: document.getElementById('f-address').value,
+    date: document.getElementById('f-date').value,
+    price: document.getElementById('f-price').value,
+    sqft: document.getElementById('f-sqft').value,
+    psf: document.getElementById('f-psf').value,
+    beds: document.getElementById('f-beds').value,
+    floor: document.getElementById('f-floor').value,
+    tenure: document.getElementById('f-tenure').value,
+    top: document.getElementById('f-top').value,
+    mrt: document.getElementById('f-mrt').value,
+    mrtTime: document.getElementById('f-mrt-time').value,
+    maint: document.getElementById('f-maint').value,
+    facing: document.getElementById('f-facing').value,
+    agent: document.getElementById('f-agent').value,
+    nnChecks: getChecks('nn', NN_ITEMS),
+    physChecks: getChecks('phys', PHYS_ITEMS),
+    bldgChecks: getChecks('bldg', BLDG_ITEMS),
+    myChecks: getChecks('my', MY_ITEMS),
+    ratings: RATING_ITEMS.map((label, i) => ({ label, value: ratings[i] || 0 })),
+    flags: document.getElementById('f-flags').value,
+    positives: document.getElementById('f-positives').value,
+    followup: document.getElementById('f-followup').value,
+    nego: document.getElementById('f-nego').value,
+    verdict: currentVerdict
+  };
+  let data = getDB();
+  const idx = data.findIndex(e => e.id === entry.id);
+  if (idx >= 0) data[idx] = entry; else data.push(entry);
+  saveDB(data);
+  showToast('Viewing saved');
+  showPage('dash');
+}
+
+function getDB() {
+  try { return JSON.parse(localStorage.getItem('proptracker') || '[]'); } catch { return []; }
+}
+function saveDB(data) {
+  localStorage.setItem('proptracker', JSON.stringify(data));
+}
+
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`page-${page}`).classList.add('active');
+  const navBtn = document.getElementById(`nav-${page}`);
+  if (navBtn) navBtn.classList.add('active');
+  window.scrollTo(0, 0);
+  if (page === 'dash') renderDash();
+}
+
+function verdictBadge(v) {
+  if (!v) return '<span class="pc-badge badge-none">No verdict</span>';
+  const map = { proceed: ['badge-proceed','Proceed'], revisit: ['badge-revisit','Revisit'], maybe: ['badge-maybe','Maybe'], pass: ['badge-pass','Pass'] };
+  const [cls, label] = map[v] || ['badge-none', v];
+  return `<span class="pc-badge ${cls}">${label}</span>`;
+}
+
+function avgRating(ratings) {
+  const vals = ratings.filter(r => r.value > 0).map(r => r.value);
+  if (!vals.length) return null;
+  return (vals.reduce((a,b) => a+b, 0) / vals.length).toFixed(1);
+}
+
+function renderDash() {
+  const data = getDB();
+  const statGrid = document.getElementById('stat-grid');
+  const list = document.getElementById('property-list');
+
+  const counts = { proceed: 0, revisit: 0, maybe: 0, pass: 0 };
+  data.forEach(e => { if (e.verdict && counts[e.verdict] !== undefined) counts[e.verdict]++; });
+
+  statGrid.innerHTML = `
+    <div class="stat-card"><div class="stat-num">${data.length}</div><div class="stat-label">Total viewings</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green-text)">${counts.proceed}</div><div class="stat-label">Proceeding</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--amber-text)">${counts.maybe + counts.revisit}</div><div class="stat-label">Maybe / revisit</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--red-text)">${counts.pass}</div><div class="stat-label">Passed</div></div>
+  `;
+
+  if (!data.length) {
+    list.innerHTML = `<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.3"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><p>No viewings yet.<br>Tap + New to add your first.</p></div>`;
+    return;
+  }
+
+  const sorted = [...data].sort((a,b) => new Date(b.savedAt) - new Date(a.savedAt));
+  list.innerHTML = sorted.map(e => {
+    const avg = avgRating(e.ratings || []);
+    const stars = avg ? '★'.repeat(Math.round(avg)) + '☆'.repeat(5 - Math.round(avg)) + ` ${avg}` : '';
+    return `<div class="property-card" onclick="showDetail('${e.id}')">
+      <div class="pc-top"><span class="pc-name">${e.name}</span>${verdictBadge(e.verdict)}</div>
+      <div class="pc-meta">${[e.price ? 'S$' + e.price : '', e.sqft ? e.sqft + ' sqft' : '', e.tenure, e.date].filter(Boolean).join(' · ')}</div>
+      ${stars ? `<div class="pc-stars" style="color:var(--amber-text)">${stars}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function showDetail(id) {
+  const data = getDB();
+  const e = data.find(d => d.id === id);
+  if (!e) return;
+
+  const avg = avgRating(e.ratings || []);
+  const nnPass = (e.nnChecks || []).filter(c => c.checked).length;
+  const nnTotal = (e.nnChecks || []).length;
+  const physPass = (e.physChecks || []).filter(c => c.checked).length;
+  const physTotal = (e.physChecks || []).length;
+
+  const ratingHtml = (e.ratings || []).filter(r => r.value > 0).map(r =>
+    `<div class="detail-row"><span class="detail-key">${r.label}</span><span class="detail-val">${'★'.repeat(r.value)}${'☆'.repeat(5-r.value)}</span></div>`
+  ).join('');
+
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-section">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+        <div><div style="font-size:20px;font-weight:600">${e.name}</div><div style="font-size:14px;color:var(--text2)">${e.address || ''}</div></div>
+        ${verdictBadge(e.verdict)}
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Unit details</div>
+      ${[
+        ['Price', e.price ? 'S$' + e.price : ''],
+        ['Size', e.sqft ? e.sqft + ' sqft' : ''],
+        ['PSF', e.psf ? 'S$' + e.psf : ''],
+        ['Bedrooms', e.beds],
+        ['Floor', e.floor],
+        ['Tenure', e.tenure],
+        ['Built (TOP)', e.top],
+        ['MRT', e.mrt ? e.mrt + (e.mrtTime ? ` (${e.mrtTime} min)` : '') : ''],
+        ['Maintenance', e.maint ? 'S$' + e.maint + '/mo' : ''],
+        ['Facing', e.facing],
+        ['Date viewed', e.date],
+        ['Agent', e.agent]
+      ].filter(([,v]) => v).map(([k,v]) => `<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Checklist summary</div>
+      <div class="detail-row"><span class="detail-key">Non-negotiables</span><span class="detail-val" style="color:${nnPass===nnTotal?'var(--green-text)':'var(--red-text)'}">${nnPass}/${nnTotal} passed</span></div>
+      <div class="detail-row"><span class="detail-key">Physical checks</span><span class="detail-val">${physPass}/${physTotal} passed</span></div>
+    </div>
+    ${ratingHtml ? `<div class="detail-section"><div class="detail-section-title">Ratings${avg ? ` · avg ${avg}/5` : ''}</div>${ratingHtml}</div>` : ''}
+    ${e.flags ? `<div class="detail-section"><div class="detail-section-title">Red flags</div><p style="font-size:14px;line-height:1.6">${e.flags}</p></div>` : ''}
+    ${e.positives ? `<div class="detail-section"><div class="detail-section-title">Positives</div><p style="font-size:14px;line-height:1.6">${e.positives}</p></div>` : ''}
+    ${e.followup ? `<div class="detail-section"><div class="detail-section-title">Follow-up</div><p style="font-size:14px;line-height:1.6">${e.followup}</p></div>` : ''}
+    ${e.nego ? `<div class="detail-section"><div class="detail-section-title">Negotiation</div><p style="font-size:14px;line-height:1.6">${e.nego}</p></div>` : ''}
+    <button class="export-btn" onclick="editEntry('${e.id}')">Edit this viewing</button>
+    <button class="delete-btn" onclick="deleteEntry('${e.id}')">Delete this viewing</button>
+  `;
+
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-detail').classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function editEntry(id) {
+  const data = getDB();
+  const e = data.find(d => d.id === id);
+  if (!e) return;
+  resetForm();
+  editingId = id;
+  document.getElementById('form-title').textContent = 'Edit viewing';
+  ['name','address','price','sqft','psf','beds','floor','top','mrt','facing','agent','flags','positives','followup','nego'].forEach(key => {
+    const el = document.getElementById(`f-${key}`);
+    if (el && e[key] !== undefined) el.value = e[key];
+  });
+  if (e.mrtTime) document.getElementById('f-mrt-time').value = e.mrtTime;
+  if (e.maint) document.getElementById('f-maint').value = e.maint;
+  if (e.date) document.getElementById('f-date').value = e.date;
+  if (e.tenure) document.getElementById('f-tenure').value = e.tenure;
+
+  const restoreChecks = (prefix, checksData, items) => {
+    (checksData || []).forEach((c, i) => {
+      if (c.checked) {
+        const box = document.getElementById(`box-${prefix}-${i}`);
+        if (box) box.classList.add('checked');
+      }
+    });
+  };
+  restoreChecks('nn', e.nnChecks, NN_ITEMS);
+  restoreChecks('phys', e.physChecks, PHYS_ITEMS);
+  restoreChecks('bldg', e.bldgChecks, BLDG_ITEMS);
+  restoreChecks('my', e.myChecks, MY_ITEMS);
+
+  (e.ratings || []).forEach((r, i) => { if (r.value) setStar(i, r.value); });
+  if (e.verdict) setVerdict(e.verdict);
+  showPage('form');
+}
+
+function deleteEntry(id) {
+  if (!confirm('Delete this viewing? This cannot be undone.')) return;
+  let data = getDB();
+  data = data.filter(e => e.id !== id);
+  saveDB(data);
+  showToast('Viewing deleted');
+  showPage('dash');
+}
+
+function renderExport() {
+  const data = getDB();
+  document.getElementById('export-area').value = JSON.stringify(data, null, 2);
+}
+
+function copyJSON() {
+  const data = getDB();
+  const text = JSON.stringify(data, null, 2);
+  document.getElementById('export-area').value = text;
+  navigator.clipboard.writeText(text).then(() => showToast('JSON copied!')).catch(() => {
+    document.getElementById('export-area').select();
+    document.execCommand('copy');
+    showToast('JSON copied!');
+  });
+}
+
+function copySummary() {
+  const data = getDB();
+  if (!data.length) { showToast('No viewings yet'); return; }
+  const lines = ['PROPERTY VIEWING SUMMARY', `Generated: ${new Date().toLocaleDateString()}`, `Total viewings: ${data.length}`, ''];
+  data.forEach((e, i) => {
+    lines.push(`${i+1}. ${e.name}`);
+    if (e.address) lines.push(`   Address: ${e.address}`);
+    if (e.date) lines.push(`   Date: ${e.date}`);
+    if (e.price) lines.push(`   Price: S$${e.price}${e.sqft ? ` (${e.sqft} sqft, S$${e.psf} psf)` : ''}`);
+    if (e.tenure) lines.push(`   Tenure: ${e.tenure}${e.top ? `, built ${e.top}` : ''}`);
+    if (e.beds) lines.push(`   Bedrooms: ${e.beds}`);
+    if (e.mrt) lines.push(`   MRT: ${e.mrt}${e.mrtTime ? ` (${e.mrtTime} min)` : ''}`);
+    const avg = avgRating(e.ratings || []);
+    if (avg) lines.push(`   Rating: ${avg}/5`);
+    const nnPass = (e.nnChecks || []).filter(c => c.checked).length;
+    const nnTotal = (e.nnChecks || []).length;
+    lines.push(`   Non-negotiables: ${nnPass}/${nnTotal}`);
+    if (e.verdict) lines.push(`   Verdict: ${e.verdict.toUpperCase()}`);
+    if (e.flags) lines.push(`   Red flags: ${e.flags}`);
+    if (e.positives) lines.push(`   Positives: ${e.positives}`);
+    lines.push('');
+  });
+  const text = lines.join('\n');
+  document.getElementById('export-area').value = text;
+  navigator.clipboard.writeText(text).then(() => showToast('Summary copied!')).catch(() => {
+    document.getElementById('export-area').select();
+    document.execCommand('copy');
+    showToast('Summary copied!');
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// Init
+resetForm();
+renderDash();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+}
+</script>
+</body>
+</html>
