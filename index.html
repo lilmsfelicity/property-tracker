@@ -271,7 +271,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
       <div class="field-row">
         <div class="field"><label>Maintenance (SGD/mo)</label><input id="f-maint" type="text" inputmode="numeric" placeholder="350"></div>
+        <div class="field"><label>Sinking fund (SGD/mo)</label><input id="f-sinking" type="text" inputmode="numeric" placeholder="50"></div>
+      </div>
+      <div class="field-row">
         <div class="field"><label>Facing / direction</label><input id="f-facing" type="text" placeholder="e.g. North-East"></div>
+        <div class="field" style="display:flex;flex-direction:column;justify-content:flex-end">
+          <div class="check-row" style="background:var(--bg2);border-radius:var(--radius-sm);border:0.5px solid var(--border2);margin:0" onclick="document.getElementById('box-mcst').classList.toggle('checked')">
+            <div class="check-box" id="box-mcst" style="margin-top:0"><svg viewBox="0 0 12 12"><polyline points="1,6 4,10 11,2"/></svg></div>
+            <span class="check-label" style="font-size:13px">MCST minutes available</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -283,16 +292,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div class="field"><label>MRT walk time (min)</label><input id="f-mrt-time" type="text" inputmode="numeric" placeholder="8"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Nearest bus stop</label><input id="f-busstop" type="text" placeholder="e.g. Opp Siglap Ctr"></div>
         <div class="field"><label>Bus walk time (min)</label><input id="f-buswalk" type="text" inputmode="numeric" placeholder="3"></div>
+        <div class="field"><label>Bus numbers</label><input id="f-busnos" type="text" placeholder="e.g. 16, 33, 196"></div>
       </div>
-      <div class="field"><label>Bus numbers</label><input id="f-busnos" type="text" placeholder="e.g. 16, 33, 196"></div>
+      <div class="field-row">
+        <div class="field"><label>Distance to ECP (min)</label><input id="f-ecp" type="text" inputmode="numeric" placeholder="5"></div>
+        <div class="field"><label>Distance to PIE (min)</label><input id="f-pie" type="text" inputmode="numeric" placeholder="10"></div>
+      </div>
     </div>
 
     <!-- EXTERIOR INSPECTION -->
     <div class="section">
       <div class="section-label">Exterior inspection</div>
-      <div class="field"><label>Amenities available</label><textarea id="f-amenities" placeholder="e.g. Pool, gym, BBQ pit, function room, playground, tennis court..."></textarea></div>
+      <div class="field"><label>First impressions</label><textarea id="f-amenities" placeholder="Overall feel, facilities, surroundings, anything that stood out..."></textarea></div>
       <div class="field">
         <label>Overall condo vibe</label>
         <div class="pill-group" id="vibe-pills">
@@ -318,6 +330,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="section">
       <div class="section-label">My situation</div>
       <div class="check-group" id="my-checks"></div>
+      <div class="field" style="margin-top:10px"><label>Notes</label><textarea id="f-mysit-notes" placeholder="Anything else relevant to your situation..."></textarea></div>
     </div>
 
     <!-- ROOM BY ROOM -->
@@ -446,16 +459,11 @@ const EXTERIOR_ITEMS = [
   'Common areas and corridors clean and well maintained',
   'No water stains on walls / ceiling in common areas',
   'No visible cracks or peeling paint in common areas',
-  'Carpark is sheltered',
-  'No pending special levies or major works',
-  'External repainting / waterproofing up to date',
-  'En bloc status clarified (if older freehold)',
-  'Number of units in development noted'
+  'Lifts in good condition (clean, responsive, no odd smells)',
+  'Security guard present (not unmanned intercom only)'
 ];
 
 const MY_ITEMS = [
-  'Within budget (incl. BSD)',
-  'Transport connectivity acceptable',
   'Security features adequate (intercom, access control)',
   'Safe for Gat to walk back alone',
   'Close to supermarket',
@@ -466,21 +474,17 @@ const MY_ITEMS = [
 ];
 
 const RED_FLAGS = [
-  'No space for oven or full-size fridge',
   'Overlooking BBQ pit',
   'Ground floor',
   'Major works needed',
-  'No convenient bus stop nearby',
-  'No nearby amenities',
-  'Maintenance fee above $500/mo',
   'Building age above 25 years',
   'No space for study desks'
 ];
 
-const RATING_ITEMS = ['Location feel','Layout and space','Condition / finish','Value for money','Gut feel'];
+const RATING_ITEMS = ['Location feel','Layout and space','Condition / finish','Gut feel'];
 
 // Common criteria for all rooms
-const ROOM_COMMON = ['Good size','Good ventilation','Good natural light','Good privacy','No water stains','No visible cracks','Noise level acceptable'];
+const ROOM_COMMON = ['Good size','Good natural light','Good privacy','No water stains','Fixed in features / carpentry','Windows open / close properly'];
 
 // ── STATE ────────────────────────────────────────────────────────────────────
 let currentVerdict = '';
@@ -751,7 +755,9 @@ function buildLivingRoom(){
     <div class="room-section-title">Living / dining specifics</div>
     <div class="rc-row"><span class="rc-label">Installed lighting</span>${rcStars(k,'lighting')}</div>
     <div class="rc-row"><span class="rc-label">Aircon installed</span>${rcCheck(k,'aircon')}</div>
-    <div class="rc-row"><span class="rc-label">Good flow / layout</span>${rcCheck(k,'flow')}</div>`;
+    <div class="rc-row"><span class="rc-label">Good flow / layout</span>${rcCheck(k,'flow')}</div>
+    <div class="rc-row"><span class="rc-label">Reno?</span>${rcPills(k,'reno',['Yes','No'])}</div>
+    <div class="rc-row" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="rc-label">Reno notes</span>${rcInput(k,'renonotes','What needs doing...')}</div>`;
   return buildRoomBlock(k,'Living / dining room',html);
 }
 
@@ -762,7 +768,8 @@ function buildMasterBedroom(){
     <div class="room-section-title">Master bedroom specifics</div>
     <div class="rc-row"><span class="rc-label">Bed size</span>${rcPills(k,'bed',['King','Queen'])}</div>
     <div class="rc-row"><span class="rc-label">Adequate closet space</span>${rcCheck(k,'closet')}</div>
-    <div class="rc-row"><span class="rc-label">No reno needed</span>${rcCheck(k,'noreno')}</div>`;
+    <div class="rc-row"><span class="rc-label">Reno?</span>${rcPills(k,'reno',['Yes','No'])}</div>
+    <div class="rc-row" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="rc-label">Reno notes</span>${rcInput(k,'renonotes','What needs doing...')}</div>`;
   return buildRoomBlock(k,'Master bedroom',html);
 }
 
@@ -775,10 +782,9 @@ function buildMasterBathroom(){
     <div class="rc-row"><span class="rc-label">No visible leaks</span>${rcCheck(k,'noleaks')}</div>
     <div class="rc-row"><span class="rc-label">Natural ventilation</span>${rcCheck(k,'ventilation')}</div>
     <div class="rc-row"><span class="rc-label">No water stains</span>${rcCheck(k,'nostains')}</div>
-    <div class="rc-row"><span class="rc-label">No visible cracks</span>${rcCheck(k,'nocracks')}</div>
-    <div class="rc-row"><span class="rc-label">No reno needed</span>${rcCheck(k,'noreno')}</div>
-    <div class="rc-row"><span class="rc-label">Cleanliness</span>${rcStars(k,'cleanliness')}</div>
-    <div class="rc-row"><span class="rc-label">Has bathtub</span>${rcPills(k,'bathtub',['Yes','No'])}</div>`;
+    <div class="rc-row"><span class="rc-label">Has bathtub</span>${rcPills(k,'bathtub',['Yes','No'])}</div>
+    <div class="rc-row"><span class="rc-label">Reno?</span>${rcPills(k,'reno',['Yes','No'])}</div>
+    <div class="rc-row" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="rc-label">Reno notes</span>${rcInput(k,'renonotes','What needs doing...')}</div>`;
   return buildRoomBlock(k,'Master bathroom',html);
 }
 
@@ -788,7 +794,8 @@ function buildCommonBedroom(num){
   const html=buildCommonCriteria(k)+`
     <div class="room-section-title">Bedroom specifics</div>
     <div class="rc-row"><span class="rc-label">Adequate closet space</span>${rcCheck(k,'closet')}</div>
-    <div class="rc-row"><span class="rc-label">No reno needed</span>${rcCheck(k,'noreno')}</div>`;
+    <div class="rc-row"><span class="rc-label">Reno?</span>${rcPills(k,'reno',['Yes','No'])}</div>
+    <div class="rc-row" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="rc-label">Reno notes</span>${rcInput(k,'renonotes','What needs doing...')}</div>`;
   return buildRoomBlock(k,`Common room ${num}`,html);
 }
 
@@ -801,9 +808,8 @@ function buildCommonToilet(num){
     <div class="rc-row"><span class="rc-label">No visible leaks</span>${rcCheck(k,'noleaks')}</div>
     <div class="rc-row"><span class="rc-label">Natural ventilation</span>${rcCheck(k,'ventilation')}</div>
     <div class="rc-row"><span class="rc-label">No water stains</span>${rcCheck(k,'nostains')}</div>
-    <div class="rc-row"><span class="rc-label">No visible cracks</span>${rcCheck(k,'nocracks')}</div>
-    <div class="rc-row"><span class="rc-label">No reno needed</span>${rcCheck(k,'noreno')}</div>
-    <div class="rc-row"><span class="rc-label">Cleanliness</span>${rcStars(k,'cleanliness')}</div>`;
+    <div class="rc-row"><span class="rc-label">Reno?</span>${rcPills(k,'reno',['Yes','No'])}</div>
+    <div class="rc-row" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="rc-label">Reno notes</span>${rcInput(k,'renonotes','What needs doing...')}</div>`;
   return buildRoomBlock(k,`Common toilet ${num}`,html);
 }
 
@@ -820,11 +826,10 @@ function buildKitchen(){
     <div class="rc-row"><span class="rc-label">Sufficient counter space</span>${rcCheck(k,'counter')}</div>
     <div class="rc-row"><span class="rc-label">Sufficient laundry area</span>${rcCheck(k,'laundry')}</div>
     <div class="rc-row"><span class="rc-label">Rubbish chute away from food prep</span>${rcCheck(k,'chute')}</div>
-    <div class="rc-row"><span class="rc-label">No reno needed</span>${rcCheck(k,'noreno')}</div>
+    <div class="rc-row"><span class="rc-label">Reno?</span>${rcPills(k,'reno',['Yes','No'])}</div>
+    <div class="rc-row" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="rc-label">Reno notes</span>${rcInput(k,'renonotes','What needs doing...')}</div>
     <div class="room-section-title">Additional spaces</div>
-    <div class="rc-row"><span class="rc-label">Spare / helper toilet present</span>${rcCheck(k,'sparetoilet')}</div>
-    <div class="rc-row"><span class="rc-label">Spare toilet — no reno needed</span>${rcCheck(k,'sparenoreno')}</div>
-    <div class="rc-row"><span class="rc-label">Bomb shelter location</span>${rcInput(k,'bsloc','e.g. Near kitchen, storeroom, none...')}</div>`;
+    <div class="rc-row"><span class="rc-label">Spare / helper toilet present</span>${rcCheck(k,'sparetoilet')}</div>`;
   return buildRoomBlock(k,'Kitchen',html);
 }
 
@@ -834,18 +839,16 @@ function buildAllRooms(){
   container.appendChild(buildLivingRoom());
   container.appendChild(buildMasterBedroom());
   container.appendChild(buildMasterBathroom());
-  // common rooms based on bed count
-  const beds=parseInt(document.getElementById('f-beds').value)||0;
-  commonRoomCount=Math.max(0,beds-1);
-  for(let i=1;i<=commonRoomCount;i++) container.appendChild(buildCommonBedroom(i));
-  // always 1 common toilet default
+  // always default 1 common room and 1 common toilet
+  commonRoomCount=1;
+  container.appendChild(buildCommonBedroom(1));
   commonToiletCount=1;
   container.appendChild(buildCommonToilet(1));
   container.appendChild(buildKitchen());
 }
 
 function onBedsChange(){
-  buildAllRooms();
+  // bed count noted for reference only; rooms added manually
 }
 
 function addCommonRoom(){
@@ -921,7 +924,7 @@ function avgRating(ratingsArr){
 function resetForm(){
   editingId=null;
   document.getElementById('form-title').textContent='New viewing';
-  ['name','block','floor','unit','price','sqft','ura','beds','baths','top','mrt','mrt-time','busstop','buswalk','busnos','maint','facing','agent','amenities','flagsnotes','exitnotes','positives','followup','nego','offer'].forEach(id=>{
+  ['name','block','floor','unit','price','sqft','ura','beds','baths','top','mrt','mrt-time','buswalk','busnos','maint','sinking','facing','agent','amenities','flagsnotes','exitnotes','positives','followup','nego','offer','ecp','pie','mysit-notes'].forEach(id=>{
     const el=document.getElementById(`f-${id}`);
     if(el) el.value='';
   });
@@ -941,6 +944,7 @@ function resetForm(){
   roomData={};
   // reset vibe pills
   document.querySelectorAll('#vibe-pills .pill').forEach(p=>p.classList.remove('sel'));
+  document.getElementById('box-mcst')?.classList.remove('checked');
   // rebuild stars
   document.getElementById('stars-cleanliness').innerHTML=[1,2,3,4,5].map(n=>`<div class="star" onclick="setStar('cleanliness',${n})">${n}</div>`).join('');
   // build checklist sections
@@ -980,9 +984,14 @@ function saveEntry(){
     buswalk:document.getElementById('f-buswalk').value,
     busnos:document.getElementById('f-busnos').value,
     maint:document.getElementById('f-maint').value,
+    sinking:document.getElementById('f-sinking').value,
+    ecp:document.getElementById('f-ecp').value,
+    pie:document.getElementById('f-pie').value,
+    mysitNotes:document.getElementById('f-mysit-notes').value,
     facing:document.getElementById('f-facing').value,
     agent:document.getElementById('f-agent').value,
     amenities:document.getElementById('f-amenities').value,
+    mcst:document.getElementById('box-mcst')?.classList.contains('checked')||false,
     vibes:Array.from(vibeSelections),
     cleanliness:starValues['cleanliness']||0,
     exteriorChecks:getChecks('ext',EXTERIOR_ITEMS),
@@ -1122,7 +1131,7 @@ function editEntry(id){
   resetForm();
   editingId=id;
   document.getElementById('form-title').textContent='Edit viewing';
-  ['name','block','floor','unit','price','sqft','ura','beds','baths','top','mrt','busstop','buswalk','busnos','maint','facing','agent','amenities','flagsnotes','exitnotes','positives','followup','nego','offer'].forEach(key=>{
+  ['name','block','floor','unit','price','sqft','ura','beds','baths','top','mrt','buswalk','busnos','maint','sinking','facing','agent','amenities','flagsnotes','exitnotes','positives','followup','nego','offer','ecp','pie'].forEach(key=>{
     const el=document.getElementById(`f-${key}`);
     if(el&&e[key]!==undefined) el.value=e[key];
   });
